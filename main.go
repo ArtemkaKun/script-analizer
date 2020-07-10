@@ -8,6 +8,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"sort"
 )
 
 func main() {
@@ -18,9 +19,7 @@ func main() {
 		log.Fatalln(err)
 	}
 
-	fmt.Println(fmt.Sprintf("Scripts in the project: %v\nLines of code in the project: %s\n",
-		len(scripts),
-		humanize.Comma(int64(calcLinesOfCode(scripts)))))
+	fmt.Println(prepareOutputData(scripts))
 }
 
 func handleConsoleArguments() (args ConsoleArguments){
@@ -84,10 +83,26 @@ func getFileData(path string) (file File, err error) {
 	return
 }
 
+func prepareOutputData(scripts []File) string {
+	totalAmountOfScripts := fmt.Sprintf("Scripts in the project: %s\n", humanize.Comma(int64(len(scripts))))
+	totalAmountOfLinesOfCode := fmt.Sprintf("Lines of code in the project: %s\n", humanize.Comma(int64(calcLinesOfCode(scripts))))
+	theBiggestScript := fmt.Sprintf("The biggest file in the project: %s lines of code\n", humanize.Comma(int64(findBiggestFile(scripts).LineCount)))
+
+	return totalAmountOfScripts + totalAmountOfLinesOfCode + theBiggestScript
+}
+
 func calcLinesOfCode(scripts []File) (linesOfCode uint) {
 	for _, script := range scripts {
 		linesOfCode += script.LineCount
 	}
 
 	return
+}
+
+func findBiggestFile(scripts []File) File {
+	sort.Slice(scripts, func(i, j int) bool {
+		return scripts[i].LineCount > scripts[j].LineCount
+	})
+
+	return scripts[0]
 }
