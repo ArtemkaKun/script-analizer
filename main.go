@@ -80,15 +80,23 @@ func getFileData(path string) (file File, err error) {
 		return File{}, err
 	}
 
+	file.Name = fileData.Name()
 	return
 }
 
 func prepareOutputData(scripts []File) string {
 	totalAmountOfScripts := fmt.Sprintf("Scripts in the project: %s\n", humanize.Comma(int64(len(scripts))))
 	totalAmountOfLinesOfCode := fmt.Sprintf("Lines of code in the project: %s\n", humanize.Comma(int64(calcLinesOfCode(scripts))))
-	theBiggestScript := fmt.Sprintf("The biggest file in the project: %s lines of code\n", humanize.Comma(int64(findBiggestFile(scripts).LineCount)))
 
-	return totalAmountOfScripts + totalAmountOfLinesOfCode + theBiggestScript
+	var biggestScript = findBiggestFile(scripts)
+	theBiggestScript := fmt.Sprintf("The biggest file in the project: %s lines of code (%s)\n",
+		humanize.Comma(int64(biggestScript.LineCount)), biggestScript.Name)
+
+	var smallestScript = findSmallestFile(scripts)
+	theSmallestScript := fmt.Sprintf("The smallest file in the project: %s lines of code (%s)\n",
+		humanize.Comma(int64(smallestScript.LineCount)), smallestScript.Name)
+	
+	return totalAmountOfScripts + totalAmountOfLinesOfCode + theBiggestScript + theSmallestScript
 }
 
 func calcLinesOfCode(scripts []File) (linesOfCode uint) {
@@ -102,6 +110,14 @@ func calcLinesOfCode(scripts []File) (linesOfCode uint) {
 func findBiggestFile(scripts []File) File {
 	sort.Slice(scripts, func(i, j int) bool {
 		return scripts[i].LineCount > scripts[j].LineCount
+	})
+
+	return scripts[0]
+}
+
+func findSmallestFile(scripts []File) File {
+	sort.Slice(scripts, func(i, j int) bool {
+		return scripts[i].LineCount < scripts[j].LineCount
 	})
 
 	return scripts[0]
