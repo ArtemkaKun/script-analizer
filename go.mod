@@ -1,1 +1,3 @@
-module "script-analizer"
+module script-analizer
+
+go 1.14
