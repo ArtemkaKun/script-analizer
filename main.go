@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"flag"
 	"fmt"
+	"github.com/dustin/go-humanize"
 	"log"
 	"os"
 	"path/filepath"
@@ -12,12 +13,14 @@ import (
 func main() {
 	args := handleConsoleArguments()
 
-	scripts, err := FindAllScripts(args)
+	scripts, err := findAllScripts(args)
 	if err != nil {
 		log.Fatalln(err)
 	}
 
-	fmt.Println(fmt.Sprintf("Scripts in the project: %v", len(scripts)))
+	fmt.Println(fmt.Sprintf("Scripts in the project: %v\nLines of code in the project: %s\n",
+		len(scripts),
+		humanize.Comma(int64(calcLinesOfCode(scripts)))))
 }
 
 func handleConsoleArguments() (args ConsoleArguments){
@@ -33,7 +36,7 @@ func handleConsoleArguments() (args ConsoleArguments){
 	return
 }
 
-func FindAllScripts(args ConsoleArguments) (scripts []File, err error) {
+func findAllScripts(args ConsoleArguments) (scripts []File, err error) {
 	err = filepath.Walk(args.DirWithScripts, func(path string, fileInfo os.FileInfo, err error) error {
 		if err != nil {
 			return err
@@ -46,7 +49,7 @@ func FindAllScripts(args ConsoleArguments) (scripts []File, err error) {
 		if matched, err := filepath.Match(args.ExtensionToSearch, filepath.Base(path)); err != nil {
 			return err
 		} else if matched {
-			file, err := GetFileData(path)
+			file, err := getFileData(path)
 			if err != nil {
 				return err
 			}
@@ -62,7 +65,7 @@ func FindAllScripts(args ConsoleArguments) (scripts []File, err error) {
 	return
 }
 
-func GetFileData(path string) (file File, err error) {
+func getFileData(path string) (file File, err error) {
 	fileData, err := os.Open(path)
 	if err != nil {
 		return File{}, err
@@ -76,6 +79,14 @@ func GetFileData(path string) (file File, err error) {
 
 	if err := scanner.Err(); err != nil {
 		return File{}, err
+	}
+
+	return
+}
+
+func calcLinesOfCode(scripts []File) (linesOfCode uint) {
+	for _, script := range scripts {
+		linesOfCode += script.LineCount
 	}
 
 	return
